@@ -27,6 +27,18 @@ async function run() {
     const PostsCollection = client.db("ThreadQube").collection("posts");
 
     await client.connect();
+
+
+    // posts
+    app.get('/posts', async(req, res) =>{
+      const posts = PostsCollection.find().sort({ postTime: -1 });
+      const result = await posts.toArray();
+      res.send(result);
+    })
+
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
