@@ -40,6 +40,12 @@ async function run() {
     })
 
     // posts
+    app.post("/Allposts", async(req, res) => {
+      const postData = req.body;
+      const result = await PostsCollection.insertOne(postData);
+      res.send(result)
+    })
+
     app.get("/Allposts", async (req, res) => {
 
       const page = parseInt(req.query.page) || 1;
@@ -65,6 +71,13 @@ async function run() {
         res.status(500).send({ error: "Failed to get posts" });
       }
     });
+
+    // user all posts
+    app.get("/Allposts/user" , async(req, res) => {
+      const email = req.query.email;
+      const result = await PostsCollection.find({ authorEmail: email }).toArray()
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
