@@ -9,8 +9,7 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
-const uri =
-  `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.zc7c13h.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.zc7c13h.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -24,20 +23,36 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    const PostsCollection = client.db("ThreadQube").collection("posts");
+    const PostsCollection = client.db("ThreadQube").collection("Allposts");
 
     await client.connect();
 
-
     // posts
-    app.get('/posts', async(req, res) =>{
-      const posts = PostsCollection.find().sort({ postTime: -1 });
-      const result = await posts.toArray();
-      res.send(result);
-    })
+    app.get("/Allposts", async (req, res) => {
 
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 5;
+      const skip = (page - 1) * limit;
 
+      try {
+        const total = await PostsCollection.estimatedDocumentCount();
+        const posts = await PostsCollection.find()
+          .sort({ postTime: -1 })
+          .skip(skip)
+          .limit(limit)
+          .toArray();
 
+        res.send({
+          posts,
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          totalPosts: total,
+        });
+      } catch (error) {
+        console.error("Failed to get posts:", error);
+        res.status(500).send({ error: "Failed to get posts" });
+      }
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
