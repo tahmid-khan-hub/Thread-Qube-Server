@@ -24,8 +24,20 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     const PostsCollection = client.db("ThreadQube").collection("Allposts");
+    const UsersCollection = client.db("ThreadQube").collection("users");
 
     await client.connect();
+
+    // users
+    app.post("/users", async(req, res) => {
+      const { email } = req.body;
+      const existingUser = await UsersCollection.findOne({ email });
+      if (existingUser) {
+        return res.send({ message: "User already exists" });
+      }
+      const result = await UsersCollection.insertOne(req.body);
+      res.send(result);
+    })
 
     // posts
     app.get("/Allposts", async (req, res) => {
