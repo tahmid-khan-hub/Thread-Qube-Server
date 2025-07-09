@@ -3,6 +3,7 @@ const app = express();
 const cors = require("cors");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
+const { ObjectId } = require("mongodb");
 const port = 3000;
 
 // middleware
@@ -71,6 +72,12 @@ async function run() {
         res.status(500).send({ error: "Failed to get posts" });
       }
     });
+
+    app.delete("/Allposts/:id", async(req, res) => {
+      const id = req.params.id;
+      const result = await PostsCollection.deleteOne({_id: new ObjectId(id)});
+      res.send(result);
+    })
 
     // user all posts
     app.get("/Allposts/user" , async(req, res) => {
