@@ -26,6 +26,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     const PostsCollection = client.db("ThreadQube").collection("Allposts");
     const UsersCollection = client.db("ThreadQube").collection("users");
+    const AnnouncementsCollection = client.db("ThreadQube").collection("announcements");
 
     await client.connect();
 
@@ -104,6 +105,12 @@ async function run() {
     app.get("/Allposts/user" , async(req, res) => {
       const email = req.query.email;
       const result = await PostsCollection.find({ authorEmail: email }).toArray()
+      res.send(result);
+    })
+
+    // announcements
+    app.post("/announcements", async(req, res) => {
+      const result = await AnnouncementsCollection.insertOne(req.body);
       res.send(result);
     })
 
