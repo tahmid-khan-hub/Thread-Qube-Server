@@ -30,6 +30,12 @@ async function run() {
     await client.connect();
 
     // users
+    app.get("/users", async(req, res) => {
+      const email = req.query.email;
+      const user = await UsersCollection.findOne({email})
+      res.send(user);
+    })
+
     app.post("/users", async(req, res) => {
       const { email } = req.body;
       const existingUser = await UsersCollection.findOne({ email });
