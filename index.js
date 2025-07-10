@@ -29,6 +29,12 @@ async function run() {
 
     await client.connect();
 
+    // All user
+    app.get("/users/all", async(req, res) => {
+      const result = await UsersCollection.find().toArray();
+      res.send(result);
+    })
+
     // users
     app.get("/users", async(req, res) => {
       const email = req.query.email;
@@ -43,6 +49,15 @@ async function run() {
         return res.send({ message: "User already exists" });
       }
       const result = await UsersCollection.insertOne(req.body);
+      res.send(result);
+    })
+
+    // update user role to admin
+    app.patch("/users/admin/:id", async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const updatedDoc = {$set:{role: "admin"}}
+      const result = await UsersCollection.updateOne(filter, updatedDoc);
       res.send(result);
     })
 
