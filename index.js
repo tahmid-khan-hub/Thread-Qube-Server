@@ -81,10 +81,14 @@ async function run() {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 5;
       const skip = (page - 1) * limit;
+      const tag = req.query.tag;
 
       try {
-        const total = await PostsCollection.estimatedDocumentCount();
-        const posts = await PostsCollection.find()
+        const query = tag ? { tag } : {};
+
+        const total = await PostsCollection.countDocuments(query);
+
+        const posts = await PostsCollection.find(query)
           .sort({ postTime: -1 })
           .skip(skip)
           .limit(limit)
@@ -134,6 +138,14 @@ async function run() {
       const result = await CommentsCollection.insertOne(comment);
       res.send(result);
     });
+
+    app.patch("/Allposts/:id/comment", async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const updatedDoc = { $inc:{ comments: 1 } };
+      const result = await PostsCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    })
 
     // Update votes
     app.patch('/Allposts/:id/vote', async (req, res) => {
