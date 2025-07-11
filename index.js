@@ -27,6 +27,7 @@ async function run() {
     const PostsCollection = client.db("ThreadQube").collection("Allposts");
     const UsersCollection = client.db("ThreadQube").collection("users");
     const AnnouncementsCollection = client.db("ThreadQube").collection("announcements");
+    const CommentsCollection = client.db("ThreadQube").collection("comments")
 
     await client.connect();
 
@@ -113,6 +114,30 @@ async function run() {
       const result = await AnnouncementsCollection.insertOne(req.body);
       res.send(result);
     })
+
+    // comments
+    app.get('/comments', async (req, res) => {
+      const { postId } = req.query;
+      const comments = await CommentsCollection.find({ postId }).sort({ createdAt: -1 }).toArray();
+      res.send(comments);
+    });
+
+    app.post('/comments', async (req, res) => {
+      const comment = req.body; 
+      comment.createdAt = new Date();
+      const result = await CommentsCollection.insertOne(comment);
+      res.send(result);
+    });
+
+    // Update votes
+    app.patch('/posts/:id/vote', async (req, res) => {
+      const postId = req.params.id;
+      const { voteType } = req.body; 
+
+      const updateField = voteType === "upvote" ? { $inc: { upvote: 1 } } : { $inc: { downVote: 1 } };
+      const result = await PostsCollection.updateOne({ _id: new ObjectId(postId) }, updateField);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
