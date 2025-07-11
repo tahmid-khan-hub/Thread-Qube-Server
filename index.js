@@ -70,6 +70,12 @@ async function run() {
       res.send(result)
     })
 
+    app.get("/Allposts/:id", async(req, res) => {
+      const id = req.params.id;
+      const result = await PostsCollection.findOne({_id: new ObjectId(id)});
+      res.send(result);
+    })
+
     app.get("/Allposts", async (req, res) => {
 
       const page = parseInt(req.query.page) || 1;
@@ -130,7 +136,7 @@ async function run() {
     });
 
     // Update votes
-    app.patch('/posts/:id/vote', async (req, res) => {
+    app.patch('/Allposts/:id/vote', async (req, res) => {
       const postId = req.params.id;
       const { voteType } = req.body; 
 
