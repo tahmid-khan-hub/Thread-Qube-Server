@@ -1,7 +1,8 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
-require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const { ObjectId } = require("mongodb");
 const port = 3000;
@@ -62,6 +63,19 @@ async function run() {
       const result = await UsersCollection.updateOne(filter, updatedDoc);
       res.send(result);
     })
+
+    // update user badge to gold
+    app.patch("/users/badge/:email", async (req, res) => {
+      const email = req.params.email;
+      const { badge } = req.body;
+
+      const result = await UsersCollection.updateOne(
+        { email },
+        { $set: { badge } }
+      );
+      res.send(result);
+    });
+
 
     // posts
     app.post("/Allposts", async(req, res) => {
@@ -155,6 +169,28 @@ async function run() {
       const updateField = voteType === "upvote" ? { $inc: { upvote: 1 } } : { $inc: { downVote: 1 } };
       const result = await PostsCollection.updateOne({ _id: new ObjectId(postId) }, updateField);
       res.send(result);
+    });
+
+    // payment intent
+    app.post("/create-payment-intent", async (req, res) => {
+      const { email } = req.body;
+
+      try {
+        const amountInCents = 1000; // $10 for membership
+
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amountInCents,
+          currency: "usd",
+          metadata: { email },
+        });
+
+        res.send({
+          clientSecret: paymentIntent.client_secret,
+        });
+      } catch (error) {
+        console.error("Payment error:", error);
+        res.status(500).json({ error: "Payment initiation failed" });
+      }
     });
 
     // Send a ping to confirm a successful connection
