@@ -32,6 +32,7 @@ async function run() {
     const UsersCollection = client.db("ThreadQube").collection("users");
     const AnnouncementsCollection = client.db("ThreadQube").collection("announcements");
     const CommentsCollection = client.db("ThreadQube").collection("comments")
+    const ReportsCollection = client.db("ThreadQube").collection("reports")
 
     await client.connect();
 
@@ -188,10 +189,36 @@ app.get("/Allposts", async (req, res) => {
       res.send(comments);
     });
 
+    app.get("/comments/:postId", async (req, res) => {
+      const postId = req.params.postId;
+
+      try {
+        const comments = await CommentsCollection.find({ postId }).sort({ createdAt: -1 }).toArray();
+        res.send(comments);
+      } catch (error) {
+        console.error("Error fetching comments:", error);
+        res.status(500).send({ error: "Failed to fetch comments" });
+      }
+    });
+
     app.post('/comments', async (req, res) => {
       const comment = req.body; 
       comment.createdAt = new Date();
       const result = await CommentsCollection.insertOne(comment);
+      res.send(result);
+    });
+
+    app.post("/reports", async (req, res) => {
+      const { postId, commentId, feedback } = req.body;
+
+      const report = {
+        postId,
+        commentId,
+        feedback,
+        reportedAt: new Date(),
+      };
+
+      const result = await ReportsCollection.insertOne(report);
       res.send(result);
     });
 
