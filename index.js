@@ -6,6 +6,9 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const { ObjectId } = require("mongodb");
 const port = 3000;
+function isValidObjectId(id) {
+  return ObjectId.isValid(id) && (String)(new ObjectId(id)) === id;
+}
 
 // middleware
 app.use(cors());
@@ -84,11 +87,7 @@ async function run() {
       res.send(result)
     })
 
-    app.get("/Allposts/:id", async(req, res) => {
-      const id = req.params.id;
-      const result = await PostsCollection.findOne({_id: new ObjectId(id)});
-      res.send(result);
-    })
+    
 
     app.get("/Allposts", async (req, res) => {
 
@@ -126,10 +125,20 @@ async function run() {
       res.send(result);
     })
 
-    // user all posts
+    // user all posts 
     app.get("/Allposts/user" , async(req, res) => {
       const email = req.query.email;
       const result = await PostsCollection.find({ authorEmail: email }).toArray()
+      res.send(result);
+    })
+
+    // specific post
+    app.get("/Allposts/:id", async(req, res) => {
+      const id = req.params.id;
+      if (!isValidObjectId(id)) {
+        return res.status(400).send({ error: "Invalid post ID" });
+      }
+      const result = await PostsCollection.findOne({_id: new ObjectId(id)});
       res.send(result);
     })
 
@@ -170,6 +179,23 @@ async function run() {
       const result = await PostsCollection.updateOne({ _id: new ObjectId(postId) }, updateField);
       res.send(result);
     });
+
+    // dashboard home (landing page)
+    app.get("/dashboard-stats", async (req, res) => {
+      const email = req.query.email;
+
+      const posts = await PostsCollection.find({ authorEmail: email }).toArray();
+      const comments = await CommentsCollection.find({ userEmail: email }).toArray();
+      const user = await UsersCollection.findOne({ email });
+
+      const totalPosts = posts.length;
+      const totalLikes = posts.reduce((sum, post) => sum + (post.upvote || 0), 0);
+      const totalComments = comments.length;
+      const memberSince = user?.createdAt;
+
+      res.send({ totalPosts, totalLikes, totalComments, memberSince, badge: user?.badge });
+    });
+
 
     // payment intent
     app.post("/create-payment-intent", async (req, res) => {
