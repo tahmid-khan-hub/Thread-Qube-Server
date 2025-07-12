@@ -148,6 +148,11 @@ async function run() {
       res.send(result);
     })
 
+    app.get("/announcements", async(req, res) => {
+      const result = await AnnouncementsCollection.find().toArray();
+      res.send(result);
+    })
+
     // comments
     app.get('/comments', async (req, res) => {
       const { postId } = req.query;
