@@ -88,36 +88,64 @@ async function run() {
     })
 
     
+app.get("/Allposts", async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5;
+  const skip = (page - 1) * limit;
+  const tag = req.query.tag;
+  const sortBy = req.query.sort || "newest";
 
-    app.get("/Allposts", async (req, res) => {
+  try {
+    const query = tag ? { tag } : {};
 
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 5;
-      const skip = (page - 1) * limit;
-      const tag = req.query.tag;
+    const total = await PostsCollection.countDocuments(query);
 
-      try {
-        const query = tag ? { tag } : {};
+    let sortCriteria;
+    if (sortBy === "popularity") {
 
-        const total = await PostsCollection.countDocuments(query);
+      const pipeline = [
+        { $match: query },
+        {
+          $addFields: {
+            totalVotes: { $subtract: ["$upvote", "$downVote"] },
+          },
+        },
+        { $sort: { totalVotes: -1, postTime: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+      ];
 
-        const posts = await PostsCollection.find(query)
-          .sort({ postTime: -1 })
-          .skip(skip)
-          .limit(limit)
-          .toArray();
+      const posts = await PostsCollection.aggregate(pipeline).toArray();
 
-        res.send({
-          posts,
-          currentPage: page,
-          totalPages: Math.ceil(total / limit),
-          totalPosts: total,
-        });
-      } catch (error) {
-        console.error("Failed to get posts:", error);
-        res.status(500).send({ error: "Failed to get posts" });
-      }
+      res.send({
+        posts,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalPosts: total,
+      });
+      return; 
+    } else {
+      sortCriteria = { postTime: -1 };
+    }
+
+    const posts = await PostsCollection.find(query)
+      .sort(sortCriteria)
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+
+    res.send({
+      posts,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      totalPosts: total,
     });
+  } catch (error) {
+    console.error("Failed to get posts:", error);
+    res.status(500).send({ error: "Failed to get posts" });
+  }
+});
+
 
     app.delete("/Allposts/:id", async(req, res) => {
       const id = req.params.id;
