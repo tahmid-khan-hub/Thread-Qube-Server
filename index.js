@@ -68,6 +68,15 @@ async function run() {
       res.send(result);
     })
 
+    // admin stats
+    app.get("/admin/stats", async(req, res) => {
+      const totalPosts = await PostsCollection.countDocuments();
+      const totalComments = await CommentsCollection.countDocuments();
+      const totalUsers = await UsersCollection.countDocuments();
+
+      res.send({totalPosts, totalComments, totalUsers});
+    })
+
     // update user badge to gold
     app.patch("/users/badge/:email", async (req, res) => {
       const email = req.params.email;
