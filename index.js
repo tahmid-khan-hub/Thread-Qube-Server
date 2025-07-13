@@ -235,6 +235,22 @@ app.get("/Allposts", async (req, res) => {
       }
     });
 
+    app.get("/reports", async(req, res) => {
+      const reports = await ReportsCollection.find().sort({ reportedAt: -1 }).toArray();
+      const commentIds = reports.map((r) => new ObjectId(r.commentId));
+      const comments = await CommentsCollection.find({ _id: { $in: commentIds } }).toArray();
+      const result = reports.map((report) => {
+      const comment = comments.find((c) => c._id.toString() === report.commentId);
+      return {
+          ...report,
+          commentText: comment?.commentText,
+          userEmail: comment?.userEmail,
+          userName: comment?.userName,
+        };
+      });
+      res.send(result);
+    })
+
 
     app.patch("/Allposts/:id/comment", async(req, res) => {
       const id = req.params.id;
