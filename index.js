@@ -208,6 +208,7 @@ app.get("/Allposts", async (req, res) => {
       res.send(result);
     });
 
+    // reports
     app.post("/reports", async (req, res) => {
       const { postId, commentId, feedback } = req.body;
 
@@ -221,6 +222,19 @@ app.get("/Allposts", async (req, res) => {
       const result = await ReportsCollection.insertOne(report);
       res.send(result);
     });
+
+    app.get("/reports/:postId", async (req, res) => {
+      const postId = req.params.postId;
+
+      try {
+        const reports = await ReportsCollection.find({ postId }).toArray();
+        const reportedCommentIds = reports.map((report) => report.commentId);
+        res.send(reportedCommentIds); 
+      } catch (error) {
+        res.status(500).send({ error: "Failed to fetch reports" });
+      }
+    });
+
 
     app.patch("/Allposts/:id/comment", async(req, res) => {
       const id = req.params.id;
