@@ -88,64 +88,105 @@ async function run() {
       res.send(result)
     })
 
-    
-app.get("/Allposts", async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 5;
-  const skip = (page - 1) * limit;
-  const tag = req.query.tag;
-  const sortBy = req.query.sort || "newest";
+    app.get("/Allposts", async (req, res) => {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 5;
+      const skip = (page - 1) * limit;
+      const tag = req.query.tag;
+      const sortBy = req.query.sort || "newest";
 
-  try {
-    const query = tag ? { tag } : {};
+      try {
+        const query = tag ? { tag } : {};
 
-    const total = await PostsCollection.countDocuments(query);
+        const total = await PostsCollection.countDocuments(query);
 
-    let sortCriteria;
-    if (sortBy === "popularity") {
+        if (sortBy === "popularity") {
+          const pipeline = [
+            { $match: query },
+            {
+              $addFields: {
+                totalVotes: { $subtract: ["$upvote", "$downVote"] },
+                postIdStr: { $toString: "$_id" },
+              },
+            },
+            {
+              $lookup: {
+                from: "comments",
+                localField: "postIdStr",
+                foreignField: "postId",
+                as: "commentsArr",
+              },
+            },
+            {
+              $addFields: {
+                commentsCount: { $size: "$commentsArr" },
+              },
+            },
+            {
+              $project: {
+                commentsArr: 0,
+                postIdStr: 0,
+              },
+            },
+            { $sort: { totalVotes: -1, postTime: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+          ];
 
-      const pipeline = [
-        { $match: query },
-        {
-          $addFields: {
-            totalVotes: { $subtract: ["$upvote", "$downVote"] },
+          const posts = await PostsCollection.aggregate(pipeline).toArray();
+
+          res.send({
+            posts,
+            currentPage: page,
+            totalPages: Math.ceil(total / limit),
+            totalPosts: total,
+          });
+          return;
+        }
+        const pipeline = [
+          { $match: query },
+          {
+            $addFields: {
+              postIdStr: { $toString: "$_id" }, 
+            },
           },
-        },
-        { $sort: { totalVotes: -1, postTime: -1 } },
-        { $skip: skip },
-        { $limit: limit },
-      ];
+          {
+            $lookup: {
+              from: "comments",
+              localField: "postIdStr",
+              foreignField: "postId",
+              as: "commentsArr",
+            },
+          },
+          {
+            $addFields: {
+              commentsCount: { $size: "$commentsArr" },
+            },
+          },
+          {
+            $project: {
+              commentsArr: 0,
+              postIdStr: 0,
+            },
+          },
+          { $sort: { postTime: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+        ];
 
-      const posts = await PostsCollection.aggregate(pipeline).toArray();
+        const posts = await PostsCollection.aggregate(pipeline).toArray();
 
-      res.send({
-        posts,
-        currentPage: page,
-        totalPages: Math.ceil(total / limit),
-        totalPosts: total,
-      });
-      return; 
-    } else {
-      sortCriteria = { postTime: -1 };
-    }
-
-    const posts = await PostsCollection.find(query)
-      .sort(sortCriteria)
-      .skip(skip)
-      .limit(limit)
-      .toArray();
-
-    res.send({
-      posts,
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
-      totalPosts: total,
+        res.send({
+          posts,
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          totalPosts: total,
+        });
+      } catch (error) {
+        console.error("Failed to get posts:", error);
+        res.status(500).send({ error: "Failed to get posts" });
+      }
     });
-  } catch (error) {
-    console.error("Failed to get posts:", error);
-    res.status(500).send({ error: "Failed to get posts" });
-  }
-});
 
 
     app.delete("/Allposts/:id", async(req, res) => {
@@ -215,7 +256,7 @@ app.get("/Allposts", async (req, res) => {
       res.send(result);
     });
 
-    // reports
+    // reports 
     app.post("/reports", async (req, res) => {
       const { postId, commentId, feedback } = req.body;
 
