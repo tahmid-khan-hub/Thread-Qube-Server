@@ -37,11 +37,23 @@ async function run() {
 
     await client.connect();
 
-    // All user
-    app.get("/users/all", async(req, res) => {
-      const result = await UsersCollection.find().toArray();
-      res.send(result);
-    })
+    // All user 
+    app.get("/users/all", async (req, res) => {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
+
+      const total = await UsersCollection.countDocuments();
+      const users = await UsersCollection.find().skip(skip).limit(limit).toArray();
+
+      res.send({
+        users,
+        totalUsers: total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      });
+    });
+
 
     // users
     app.get("/users", async(req, res) => {
@@ -293,21 +305,43 @@ async function run() {
       }
     });
 
-    app.get("/reports", async(req, res) => {
-      const reports = await ReportsCollection.find().sort({ reportedAt: -1 }).toArray();
-      const commentIds = reports.map((r) => new ObjectId(r.commentId));
-      const comments = await CommentsCollection.find({ _id: { $in: commentIds } }).toArray();
-      const result = reports.map((report) => {
-      const comment = comments.find((c) => c._id.toString() === report.commentId);
-      return {
-          ...report,
-          commentText: comment?.commentText,
-          userEmail: comment?.userEmail,
-          userName: comment?.userName,
-        };
-      });
-      res.send(result);
-    })
+    app.get("/reports", async (req, res) => {
+      try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const totalReports = await ReportsCollection.estimatedDocumentCount();
+
+        const reports = await ReportsCollection.find()
+          .sort({ reportedAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .toArray();
+
+        const commentIds = reports.map((r) => new ObjectId(r.commentId));
+        const comments = await CommentsCollection.find({ _id: { $in: commentIds } }).toArray();
+
+        const result = reports.map((report) => {
+          const comment = comments.find((c) => c._id.toString() === report.commentId);
+          return {
+            ...report,
+            commentText: comment?.commentText || "Deleted comment",
+            userEmail: comment?.userEmail,
+            userName: comment?.userName,
+          };
+        });
+
+        res.send({
+          reports: result,
+          totalReports,
+          totalPages: Math.ceil(totalReports / limit),
+        });
+      } catch (error) {
+        console.error("Error fetching paginated reports:", error);
+        res.status(500).send({ error: "Failed to fetch reports" });
+      }
+    });
 
     // Delete a report
     app.delete("/reports/:id", async (req, res) => {
