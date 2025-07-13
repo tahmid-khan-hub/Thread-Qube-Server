@@ -208,6 +208,13 @@ app.get("/Allposts", async (req, res) => {
       res.send(result);
     });
 
+    // Delete specific comment
+    app.delete("/comments/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await CommentsCollection.deleteOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
     // reports
     app.post("/reports", async (req, res) => {
       const { postId, commentId, feedback } = req.body;
@@ -250,6 +257,20 @@ app.get("/Allposts", async (req, res) => {
       });
       res.send(result);
     })
+
+    // Delete a report
+    app.delete("/reports/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await ReportsCollection.deleteOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
+    //  Delete all reports of a comment
+    app.delete("/reports/byComment/:commentId", async (req, res) => {
+      const { commentId } = req.params;
+      const result = await ReportsCollection.deleteMany({ commentId });
+      res.send(result);
+    });
 
 
     app.patch("/Allposts/:id/comment", async(req, res) => {
