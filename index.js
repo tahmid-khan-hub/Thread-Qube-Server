@@ -264,15 +264,29 @@ async function run() {
 
     app.get("/comments/:postId", async (req, res) => {
       const postId = req.params.postId;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
 
       try {
-        const comments = await CommentsCollection.find({ postId }).sort({ createdAt: -1 }).toArray();
-        res.send(comments);
+        const totalComments = await CommentsCollection.countDocuments({ postId });
+        const comments = await CommentsCollection.find({ postId })
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .toArray();
+
+        res.send({
+          comments,
+          totalComments,
+          totalPages: Math.ceil(totalComments / limit),
+        });
       } catch (error) {
         console.error("Error fetching comments:", error);
         res.status(500).send({ error: "Failed to fetch comments" });
       }
     });
+
 
     app.post('/comments', async (req, res) => {
       const comment = req.body; 
