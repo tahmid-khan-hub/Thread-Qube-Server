@@ -33,6 +33,7 @@ async function run() {
     const AnnouncementsCollection = client.db("ThreadQube").collection("announcements");
     const CommentsCollection = client.db("ThreadQube").collection("comments")
     const ReportsCollection = client.db("ThreadQube").collection("reports")
+    const TagsCollection = client.db("ThreadQube").collection("tags")
 
     await client.connect();
 
@@ -105,7 +106,7 @@ async function run() {
       const sortBy = req.query.sort || "newest";
 
       try {
-        const query = tag ? { tag } : {};
+        const query = tag ? { tag: { $regex: new RegExp(`^${tag}$`, "i") } } : {};
 
         const total = await PostsCollection.countDocuments(query);
 
@@ -355,6 +356,22 @@ async function run() {
       const memberSince = user?.createdAt;
 
       res.send({ totalPosts, totalLikes, totalComments, memberSince, badge: user?.badge });
+    });
+
+    // Tags
+    app.get("/tags", async (req, res) => {
+      const tags = await TagsCollection.find().toArray();
+      res.send(tags);
+    });
+
+    app.post("/tags", async (req, res) => {
+      const { name } = req.body;
+      const exists = await TagsCollection.findOne({ name });
+
+      if (exists) return res.status(400).send({ error: "Tag already exists" });
+
+      const result = await TagsCollection.insertOne({ name });
+      res.send(result);
     });
 
 
