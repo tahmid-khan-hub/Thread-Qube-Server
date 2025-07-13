@@ -217,11 +217,21 @@ async function run() {
       res.send(result);
     })
 
-    // user all posts 
+    // user all posts  
     app.get("/Allposts/user" , async(req, res) => {
       const email = req.query.email;
-      const result = await PostsCollection.find({ authorEmail: email }).toArray()
-      res.send(result);
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
+      const query = { authorEmail: email };
+
+      const totalPosts = await PostsCollection.countDocuments(query);
+      const posts = await PostsCollection.find(query)
+      .sort({ postTime: -1 }).skip(skip).limit(limit).toArray();
+
+      res.send({posts, totalPosts, totalPages: Math.ceil(totalPosts / limit), currentPage: page,
+      });
+
     })
 
     // specific post
