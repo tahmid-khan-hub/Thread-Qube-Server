@@ -41,7 +41,7 @@ const verfiyFirebaseToken = async(req, res, next) =>{
 
   try{
     const decoded = await admin.auth().verifyIdToken(token)
-    console.log('decoded token---------------------', decoded);
+    console.log('decoded token ->', decoded);
     req.decoded = decoded;
     next()
   }
@@ -70,7 +70,7 @@ async function run() {
     await client.connect();
 
     // All user 
-    app.get("/users/all", async (req, res) => {
+    app.get("/users/all", verfiyFirebaseToken, async (req, res) => {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
       const skip = (page - 1) * limit;
@@ -87,8 +87,8 @@ async function run() {
     });
 
 
-    // users
-    app.get("/users", async(req, res) => {
+    // users 
+    app.get("/users", verfiyFirebaseToken, verifyTokenEmail, async(req, res) => {
       const email = req.query.email;
       const user = await UsersCollection.findOne({email})
       res.send(user);
@@ -105,7 +105,7 @@ async function run() {
     })
 
     // update user role to admin
-    app.patch("/users/admin/:id", async(req, res) => {
+    app.patch("/users/admin/:id", verfiyFirebaseToken, async(req, res) => {
       const id = req.params.id;
       const filter = {_id: new ObjectId(id)};
       const updatedDoc = {$set:{role: "admin"}}
@@ -114,7 +114,7 @@ async function run() {
     })
 
     // admin stats
-    app.get("/admin/stats", async(req, res) => {
+    app.get("/admin/stats", verfiyFirebaseToken, async(req, res) => {
       const totalPosts = await PostsCollection.countDocuments();
       const totalComments = await CommentsCollection.countDocuments();
       const totalUsers = await UsersCollection.countDocuments();
@@ -136,7 +136,7 @@ async function run() {
 
 
     // posts
-    app.post("/Allposts", async(req, res) => {
+    app.post("/Allposts", verfiyFirebaseToken, async(req, res) => {
       const postData = req.body;
       const result = await PostsCollection.insertOne(postData);
       res.send(result)
@@ -243,14 +243,14 @@ async function run() {
     });
 
 
-    app.delete("/Allposts/:id", async(req, res) => {
+    app.delete("/Allposts/:id", verfiyFirebaseToken, async(req, res) => {
       const id = req.params.id;
       const result = await PostsCollection.deleteOne({_id: new ObjectId(id)});
       res.send(result);
     })
 
     // user all posts  
-    app.get("/Allposts/user" , async(req, res) => {
+    app.get("/Allposts/user", verfiyFirebaseToken, verifyTokenEmail, async(req, res) => {
       const email = req.query.email;
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
@@ -266,6 +266,19 @@ async function run() {
 
     })
 
+    app.get("/Allposts/user/recent", verfiyFirebaseToken, verifyTokenEmail, async (req, res) => {
+      const email = req.query.email;
+      const query = { authorEmail: email };
+      
+      const posts = await PostsCollection.find(query)
+        .sort({ postTime: -1 })
+        .limit(3) 
+        .toArray();
+
+      res.send(posts);
+    });
+
+
     // specific post
     app.get("/Allposts/:id", async(req, res) => {
       const id = req.params.id;
@@ -277,7 +290,7 @@ async function run() {
     })
 
     // announcements
-    app.post("/announcements", async(req, res) => {
+    app.post("/announcements", verfiyFirebaseToken, async(req, res) => {
       const result = await AnnouncementsCollection.insertOne(req.body);
       res.send(result);
     })
@@ -288,7 +301,7 @@ async function run() {
     })
 
     // comments
-    app.get('/comments', async (req, res) => {
+    app.get('/comments', verfiyFirebaseToken, async (req, res) => {
       const { postId } = req.query;
       const comments = await CommentsCollection.find({ postId }).sort({ createdAt: -1 }).toArray();
       res.send(comments);
@@ -320,7 +333,7 @@ async function run() {
     });
 
 
-    app.post('/comments', async (req, res) => {
+    app.post('/comments', verfiyFirebaseToken, async (req, res) => {
       const comment = req.body; 
       comment.createdAt = new Date();
       const result = await CommentsCollection.insertOne(comment);
@@ -328,7 +341,7 @@ async function run() {
     });
 
     // Delete specific comment
-    app.delete("/comments/:id", async (req, res) => {
+    app.delete("/comments/:id", verfiyFirebaseToken, async (req, res) => {
       const id = req.params.id;
       const result = await CommentsCollection.deleteOne({ _id: new ObjectId(id) });
       res.send(result);
@@ -361,7 +374,7 @@ async function run() {
       }
     });
 
-    app.get("/reports", async (req, res) => {
+    app.get("/reports", verfiyFirebaseToken, async (req, res) => {
       try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
@@ -400,21 +413,21 @@ async function run() {
     });
 
     // Delete a report
-    app.delete("/reports/:id", async (req, res) => {
+    app.delete("/reports/:id", verfiyFirebaseToken, async (req, res) => {
       const id = req.params.id;
       const result = await ReportsCollection.deleteOne({ _id: new ObjectId(id) });
       res.send(result);
     });
 
     //  Delete all reports of a comment
-    app.delete("/reports/byComment/:commentId", async (req, res) => {
+    app.delete("/reports/byComment/:commentId", verfiyFirebaseToken, async (req, res) => {
       const { commentId } = req.params;
       const result = await ReportsCollection.deleteMany({ commentId });
       res.send(result);
     });
 
 
-    app.patch("/Allposts/:id/comment", async(req, res) => {
+    app.patch("/Allposts/:id/comment", verfiyFirebaseToken, async(req, res) => {
       const id = req.params.id;
       const filter = {_id: new ObjectId(id)};
       const updatedDoc = { $inc:{ comments: 1 } };
@@ -433,7 +446,7 @@ async function run() {
     });
 
     // dashboard home (landing page)
-    app.get("/dashboard-stats", async (req, res) => {
+    app.get("/dashboard-stats", verfiyFirebaseToken, verifyTokenEmail, async (req, res) => {
       const email = req.query.email;
 
       const posts = await PostsCollection.find({ authorEmail: email }).toArray();
@@ -449,12 +462,12 @@ async function run() {
     });
 
     // Tags
-    app.get("/tags", async (req, res) => {
+    app.get("/tags", verfiyFirebaseToken, async (req, res) => {
       const tags = await TagsCollection.find().toArray();
       res.send(tags);
     });
 
-    app.post("/tags", async (req, res) => {
+    app.post("/tags", verfiyFirebaseToken, async (req, res) => {
       const { name } = req.body;
       const exists = await TagsCollection.findOne({ name });
 
