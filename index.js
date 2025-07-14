@@ -467,6 +467,12 @@ async function run() {
       res.send(tags);
     });
 
+
+    app.get("/Alltags", async (req, res) => {
+      const tags = await TagsCollection.find().toArray();
+      res.send(tags);
+    });
+
     app.post("/tags", verfiyFirebaseToken, async (req, res) => {
       const { name } = req.body;
       const exists = await TagsCollection.findOne({ name });
@@ -479,7 +485,7 @@ async function run() {
 
 
     // payment intent
-    app.post("/create-payment-intent", async (req, res) => {
+    app.post("/create-payment-intent", verfiyFirebaseToken, verifyTokenEmail, async (req, res) => {
       const { email } = req.body;
 
       try {
