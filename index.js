@@ -5,6 +5,8 @@ const cors = require("cors");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const { ObjectId } = require("mongodb");
+const admin = require("firebase-admin");
+const serviceAccount = require("./firebase-admin-service-key.json");
 const port = 3000;
 function isValidObjectId(id) {
   return ObjectId.isValid(id) && (String)(new ObjectId(id)) === id;
@@ -13,6 +15,11 @@ function isValidObjectId(id) {
 // middleware
 app.use(cors());
 app.use(express.json());
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.zc7c13h.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -24,6 +31,31 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+const verfiyFirebaseToken = async(req, res, next) =>{
+  const AuthHeader = req.headers?.authorization;
+  if(!AuthHeader || !AuthHeader.startsWith('Bearer ')){
+    return res.status(401).send({message: 'unauthorized access'})
+  }
+  const token = AuthHeader.split(' ')[1];
+
+  try{
+    const decoded = await admin.auth().verifyIdToken(token)
+    console.log('decoded token---------------------', decoded);
+    req.decoded = decoded;
+    next()
+  }
+  catch(error){
+    return res.status(401).send({message: 'unauthorized access'})
+  }
+}
+
+const verifyTokenEmail = (req, res, next) =>{
+  if(req.query.email !== req.decoded.email){
+    return res.status(403).send({message: 'forbidden access'})
+  }
+  next()
+}
 
 async function run() {
   try {
