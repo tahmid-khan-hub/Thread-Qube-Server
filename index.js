@@ -6,14 +6,18 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const { ObjectId } = require("mongodb");
 const admin = require("firebase-admin");
-const serviceAccount = require("./firebase-admin-service-key.json");
+const decoded = Buffer.from(process.env.FB_SERVICE_KEY, 'base64').toString('utf8')
+const serviceAccount = JSON.parse(decoded)
 const port = 3000;
 function isValidObjectId(id) {
   return ObjectId.isValid(id) && (String)(new ObjectId(id)) === id;
 }
 
 // middleware
-app.use(cors());
+app.use(cors({
+  origin: "https://threadqube.netlify.app",
+  credentials: true
+}));
 app.use(express.json());
 
 admin.initializeApp({
@@ -67,7 +71,7 @@ async function run() {
     const ReportsCollection = client.db("ThreadQube").collection("reports")
     const TagsCollection = client.db("ThreadQube").collection("tags")
 
-    await client.connect();
+    // await client.connect();
 
     // All user 
     app.get("/users/all", verfiyFirebaseToken, async (req, res) => {
