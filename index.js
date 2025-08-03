@@ -15,7 +15,7 @@ function isValidObjectId(id) {
 
 // middleware
 app.use(cors({
-  origin: "https://threadqube.netlify.app",
+  origin: ["https://threadqube.netlify.app", "http://localhost:5173"],
   credentials: true
 }));
 app.use(express.json());
@@ -64,12 +64,12 @@ const verifyTokenEmail = (req, res, next) =>{
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    const PostsCollection = client.db("ThreadQube").collection("Allposts");
-    const UsersCollection = client.db("ThreadQube").collection("users");
-    const AnnouncementsCollection = client.db("ThreadQube").collection("announcements");
-    const CommentsCollection = client.db("ThreadQube").collection("comments")
-    const ReportsCollection = client.db("ThreadQube").collection("reports")
-    const TagsCollection = client.db("ThreadQube").collection("tags")
+    const PostsCollection = client.db("ThreadDB").collection("Allposts");
+    const UsersCollection = client.db("ThreadDB").collection("users");
+    const AnnouncementsCollection = client.db("ThreadDB").collection("announcements");
+    const CommentsCollection = client.db("ThreadDB").collection("comments")
+    const ReportsCollection = client.db("ThreadDB").collection("reports")
+    const TagsCollection = client.db("ThreadDB").collection("tags")
 
     // await client.connect();
 
