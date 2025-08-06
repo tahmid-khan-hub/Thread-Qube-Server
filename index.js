@@ -99,6 +99,17 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/feedback", async(req, res) => {
+      const result = await FeedbackCollection.find().toArray();
+      res.send(result);
+    })
+
+    app.delete("/feedback/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await FeedbackCollection.deleteOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
 
     // users 
     app.get("/users", verfiyFirebaseToken, verifyTokenEmail, async(req, res) => {
