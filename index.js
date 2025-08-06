@@ -70,6 +70,7 @@ async function run() {
     const CommentsCollection = client.db("ThreadDB").collection("comments")
     const ReportsCollection = client.db("ThreadDB").collection("reports")
     const TagsCollection = client.db("ThreadDB").collection("tags")
+    const FeedbackCollection = client.db("ThreadDB").collection("feedback")
 
     // await client.connect();
 
@@ -88,6 +89,14 @@ async function run() {
         totalPages: Math.ceil(total / limit),
         currentPage: page,
       });
+    });
+
+
+    // feedback
+    app.post("/feedback", async (req, res) => {
+      const feedback = req.body;
+      const result = await FeedbackCollection.insertOne(feedback);
+      res.send(result);
     });
 
 
