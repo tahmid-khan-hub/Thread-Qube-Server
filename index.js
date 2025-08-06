@@ -124,6 +124,24 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/feedback/:id/read", async (req, res) => {
+      const id = req.params.id;
+
+      try {
+        const result = await FeedbackCollection.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              read: true,
+            },
+          }
+        );
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ error: "Failed to mark feedback as read." });
+      }
+    });
+
 
     // users 
     app.get("/users", verfiyFirebaseToken, verifyTokenEmail, async(req, res) => {
@@ -337,6 +355,25 @@ async function run() {
       const result = await AnnouncementsCollection.find().toArray();
       res.send(result);
     })
+
+    app.patch("/announcements/:id/read", async (req, res) => {
+      const id = req.params.id;
+
+      try {
+        const result = await AnnouncementsCollection.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              read: true,
+            },
+          }
+        );
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ error: "Failed to update announcement read status." });
+      }
+    });
+
 
     // comments
     app.get('/comments', verfiyFirebaseToken, async (req, res) => {
