@@ -110,6 +110,20 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/feedback/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await FeedbackCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            response: true,
+            respondedAt: new Date()
+          }
+        }
+      );
+      res.send(result);
+    });
+
 
     // users 
     app.get("/users", verfiyFirebaseToken, verifyTokenEmail, async(req, res) => {
