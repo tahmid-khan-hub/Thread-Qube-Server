@@ -190,6 +190,28 @@ async function run() {
       res.send(result);
     });
 
+    app.put("/users/update", verfiyFirebaseToken, verifyTokenEmail, async (req, res) => {
+      const email = req.query.email;
+      const { name, photoURL } = req.body;
+
+      const result = await UsersCollection.updateOne(
+        { email },
+        {
+          $set: {
+            name,
+            photoURL,
+            updatedAt: new Date(),
+          },
+        }
+      );
+
+      if (result.modifiedCount > 0) {
+        return res.status(200).send({ message: "Updated" });
+      } else {
+        return res.status(400).send({ message: "Nothing updated" });
+      }
+    });
+
 
     // posts
     app.post("/Allposts", verfiyFirebaseToken, async(req, res) => {
