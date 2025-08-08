@@ -588,6 +588,11 @@ async function run() {
       res.send(result);
     })
 
+    app.get("/staticPages/privacy", async(req, res) => {
+      const result = await StaticPagesCollection.findOne({_id: "privacy-and-policy"});
+      res.send(result);
+    })
+
 
     // payment intent
     app.post("/create-payment-intent", async (req, res) => {
