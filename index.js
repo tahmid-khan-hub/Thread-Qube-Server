@@ -583,6 +583,11 @@ async function run() {
 
 
     // staticPages
+    app.get("/staticPages/all", async(req, res) => {
+      const result = await StaticPagesCollection.find().toArray();
+      res.send(result);
+    })
+
     app.get("/staticPages", async(req, res) => {
       const result = await StaticPagesCollection.findOne({_id: "terms-and-conditions"});
       res.send(result);
