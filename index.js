@@ -593,6 +593,33 @@ async function run() {
       res.send(result);
     })
 
+    // specific pages - terms or privacy
+    app.get("/staticPages/:id", verfiyFirebaseToken, async(req, res) => {
+      const result = await StaticPagesCollection.findOne({id});
+      res.send(result);
+    })
+
+    // update page content and last updated date
+    app.patch("/staticPages/:id", verfiyFirebaseToken, async(req, res) => {
+      const id = req.params.id;
+      const { content, lastUpdated } = req.body;
+
+      const result = await StaticPagesCollection.updateOne(
+        { id },
+        {
+          $set: {
+            content,
+            lastUpdated: new Date(lastUpdated),
+          },
+        }
+      );
+
+      if (result.modifiedCount === 0) {
+        return res.status(404).send({ message: 'No document updated' });
+      }
+
+      res.send({ message: 'Page updated successfully' });
+    })
 
     // payment intent
     app.post("/create-payment-intent", async (req, res) => {
