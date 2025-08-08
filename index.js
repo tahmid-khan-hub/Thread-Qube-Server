@@ -71,6 +71,7 @@ async function run() {
     const ReportsCollection = client.db("ThreadDB").collection("reports")
     const TagsCollection = client.db("ThreadDB").collection("tags")
     const FeedbackCollection = client.db("ThreadDB").collection("feedback")
+    const StaticPagesCollection = client.db("ThreadDB").collection("staticPages")
 
     // await client.connect();
 
@@ -579,6 +580,13 @@ async function run() {
       const result = await TagsCollection.insertOne({ name });
       res.send(result);
     });
+
+
+    // staticPages
+    app.get("/staticPages", async(req, res) => {
+      const result = await StaticPagesCollection.findOne({_id: "terms-and-conditions"});
+      res.send(result);
+    })
 
 
     // payment intent
