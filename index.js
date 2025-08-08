@@ -600,7 +600,8 @@ async function run() {
 
     // specific pages - terms or privacy
     app.get("/staticPages/:id", verfiyFirebaseToken, async(req, res) => {
-      const result = await StaticPagesCollection.findOne({id});
+      const id = req.params.id;
+      const result = await StaticPagesCollection.findOne({_id: id});
       res.send(result);
     })
 
