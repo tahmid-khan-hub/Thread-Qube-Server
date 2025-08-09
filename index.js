@@ -611,7 +611,7 @@ async function run() {
       const { content, lastUpdated } = req.body;
 
       const result = await StaticPagesCollection.updateOne(
-        { id },
+        { _id: id },
         {
           $set: {
             content,
