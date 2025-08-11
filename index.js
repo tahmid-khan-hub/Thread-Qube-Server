@@ -611,6 +611,22 @@ async function run() {
       res.send(result);
     })
 
+    // patch api for social links
+    app.patch("/staticPages/socialLinks",verfiyFirebaseToken, async(req, res) => {
+      const { facebook, twitter, linkedin } = req.body;
+      const result = await StaticPagesCollection.updateOne(
+        {_id: "social-links"},
+        {
+          $set: {
+            facebook, twitter, linkedin
+          }
+        },
+        {upsert: true}
+      )
+
+      res.send(result);
+    })
+
     // update page content and last updated date
     app.patch("/staticPages/:id", verfiyFirebaseToken, async(req, res) => {
       const id = req.params.id;
@@ -629,22 +645,6 @@ async function run() {
       if (result.modifiedCount === 0) {
         return res.status(404).send({ message: 'No document updated' });
       }
-
-      res.send(result);
-    })
-
-    // patch api for social links
-    app.patch("/staticPages/socialLinks", async(req, res) => {
-      const { facebook, twitter, linkedin } = req.body;
-      const result = await StaticPagesCollection.updateOne(
-        {_id: "social-links"},
-        {
-          $set: {
-            facebook, twitter, linkedin
-          }
-        },
-        {upsert: true}
-      )
 
       res.send(result);
     })
