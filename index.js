@@ -628,26 +628,19 @@ async function run() {
     })
 
     // update page content and last updated date
-    app.patch("/staticPages/:id", verfiyFirebaseToken, async(req, res) => {
+    app.put("/staticPages/:id", verfiyFirebaseToken, async (req, res) => {
       const id = req.params.id;
-      const { content, lastUpdated } = req.body;
+      const payload = { ...req.body };
+
+      payload.lastUpdated = new Date();
 
       const result = await StaticPagesCollection.updateOne(
         { _id: id },
-        {
-          $set: {
-            content,
-            lastUpdated: new Date(lastUpdated),
-          },
-        }
+        { $set: payload }
       );
 
-      if (result.modifiedCount === 0) {
-        return res.status(404).send({ message: 'No document updated' });
-      }
-
       res.send(result);
-    })
+    });
 
     // payment intent
     app.post("/create-payment-intent", async (req, res) => {
