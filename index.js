@@ -357,6 +357,21 @@ async function run() {
       res.send(posts);
     });
 
+    // All posts for specific tags count
+    app.get("/allPosts/tags", verfiyFirebaseToken, async (req, res) => {
+      try {
+        const result = await PostsCollection.aggregate([
+          { $group: { _id: "$tag", count: { $sum: 1 } } },
+          { $project: { _id: 0, tag: "$_id", count: 1 } },
+          { $sort: { count: -1 } }
+        ]).toArray();
+
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
+    });
 
     // specific post
     app.get("/Allposts/:id", async(req, res) => {
