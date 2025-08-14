@@ -151,6 +151,29 @@ async function run() {
       res.send(user);
     })
 
+    // users - new this month
+    app.get("/users/new-this-month", verfiyFirebaseToken, async (req, res) => {
+      try {
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const users = await UsersCollection.find({
+          role: "user",
+          $expr: {
+            $gte: [
+              { $dateFromString: { dateString: "$createdAt" } },
+              firstDayOfMonth
+            ]
+          }
+        }).toArray();
+
+        res.send(users);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Error fetching new users", error });
+      }
+    });
+
     app.post("/users", async(req, res) => {
       const { email } = req.body;
       const existingUser = await UsersCollection.findOne({ email });
