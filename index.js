@@ -15,7 +15,7 @@ function isValidObjectId(id) {
 
 // middleware
 app.use(cors({
-  origin: ["https://threadqube.netlify.app", "http://localhost:5173"],
+  origin: ["https://threadqube.netlify.app", "http://localhost:5173", "https://thread-qube-app.netlify.app"],
   credentials: true
 }));
 app.use(express.json());
