@@ -381,7 +381,7 @@ async function run() {
     });
 
     // All posts for specific tags count
-    app.get("/allPosts/tags", verfiyFirebaseToken, async (req, res) => {
+    app.get("/AllPosts/tags", verfiyFirebaseToken, async (req, res) => {
       try {
         const result = await PostsCollection.aggregate([
           { $group: { _id: "$tag", count: { $sum: 1 } } },
@@ -397,7 +397,7 @@ async function run() {
     });
 
     // specific post
-    app.get("/Allposts/:id", async(req, res) => {
+    app.get("/Allposts/:id", verfiyFirebaseToken, async(req, res) => {
       const id = req.params.id;
       if (!isValidObjectId(id)) {
         return res.status(400).send({ error: "Invalid post ID" });
@@ -443,7 +443,7 @@ async function run() {
       res.send(comments);
     });
 
-    app.get("/comments/:postId", async (req, res) => {
+    app.get("/comments/:postId", verfiyFirebaseToken, async (req, res) => {
       const postId = req.params.postId;
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
@@ -572,7 +572,7 @@ async function run() {
     })
 
     // Update votes
-    app.patch('/Allposts/:id/vote', async (req, res) => {
+    app.patch('/Allposts/:id/vote', verfiyFirebaseToken, async (req, res) => {
       const postId = req.params.id;
       const { voteType } = req.body; 
 
